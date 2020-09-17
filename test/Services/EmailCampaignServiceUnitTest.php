@@ -6,38 +6,40 @@ use Ctct\Components\EmailMarketing\CampaignPreview;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Message\Response;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 
-class EmailMarketingServiceUnitTest extends PHPUnit_Framework_TestCase
+class EmailMarketingServiceUnitTest extends PHPUnit\Framework\TestCase
 {
     /**
      * @var Client
      */
     private static $client;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass() : void
     {
-        self::$client = new Client();
-        $getCampaignsStream = Stream::factory(JsonLoader::getCampaignsJson());
-        $getCampaignStream = Stream::factory(JsonLoader::getCampaignJson());
-        $getPreviewStream = Stream::factory(JsonLoader::getPreviewJson());
-        $mock = new Mock([
-            new Response(200, array(), $getCampaignsStream),
+        $getCampaigns = JsonLoader::getCampaignsJson();
+        $getCampaign = JsonLoader::getCampaignJson();
+        $getPreview = JsonLoader::getPreviewJson();
+
+        $mock = new MockHandler([
+            new Response(200, array(), $getCampaigns),
             new Response(204, array()),
             new Response(400, array()),
-            new Response(200, array(), $getCampaignStream),
-            new Response(201, array(), $getCampaignStream),
-            new Response(200, array(), $getCampaignStream),
-            new Response(200, array(), $getPreviewStream)
+            new Response(200, array(), $getCampaign),
+            new Response(201, array(), $getCampaign),
+            new Response(200, array(), $getCampaign),
+            new Response(200, array(), $getPreview)
         ]);
-        self::$client->getEmitter()->attach($mock);
+
+        $handlerStack = HandlerStack::create($mock);
+        self::$client = new Client(['handler' => $handlerStack]);
     }
 
     public function testGetCampaigns()
     {
-        $response = self::$client->get('/')->json();
+        $response = json_decode(self::$client->get('/')->getBody(), true);
         $result = new ResultSet($response['results'], $response['meta']);
         $campaigns = array();
         foreach ($result->results as $campaign) {
@@ -78,7 +80,7 @@ class EmailMarketingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $campaign = Campaign::create($response->json());
+        $campaign = Campaign::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\EmailMarketing\Campaign', $campaign);
         $this->assertEquals("1100394165290", $campaign->id);
         $this->assertEquals("CampaignName-05965ddb-12d2-43e5-b8f3-0c22ca487c3a", $campaign->name);
@@ -146,7 +148,7 @@ class EmailMarketingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->post('/');
 
-        $campaign = Campaign::create($response->json());
+        $campaign = Campaign::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\EmailMarketing\Campaign', $campaign);
         $this->assertEquals("1100394165290", $campaign->id);
         $this->assertEquals("CampaignName-05965ddb-12d2-43e5-b8f3-0c22ca487c3a", $campaign->name);
@@ -213,7 +215,7 @@ class EmailMarketingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->put('/');
 
-        $campaign = Campaign::create($response->json());
+        $campaign = Campaign::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\EmailMarketing\Campaign', $campaign);
         $this->assertEquals("1100394165290", $campaign->id);
         $this->assertEquals("CampaignName-05965ddb-12d2-43e5-b8f3-0c22ca487c3a", $campaign->name);
@@ -279,7 +281,7 @@ class EmailMarketingServiceUnitTest extends PHPUnit_Framework_TestCase
     public function testGetPreview() {
         $response = self::$client->get('/');
 
-        $preview = CampaignPreview::create($response->json());
+        $preview = CampaignPreview::create(json_decode($response->getBody(), true));
         $this->assertEquals("Subject Test", $preview->subject);
         $this->assertEquals("myemail@example.com", $preview->fromEmail);
         $this->assertEquals("myemail@example.com", $preview->replyToEmail);

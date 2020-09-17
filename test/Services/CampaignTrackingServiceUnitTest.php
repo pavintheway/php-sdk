@@ -8,46 +8,48 @@ use Ctct\Components\Tracking\OpenActivity;
 use Ctct\Components\Tracking\SendActivity;
 use Ctct\Components\Tracking\TrackingSummary;
 use Ctct\Components\Tracking\UnsubscribeActivity;
-
 use GuzzleHttp\Client;
-use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Message\Response;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 
-class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
+class CampaignTrackingServiceUnitTest extends PHPUnit\Framework\TestCase
 {
     /**
      * @var Client
      */
     private static $client;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass() : void
     {
         self::$client = new Client();
-        $bouncesStream = Stream::factory(JsonLoader::getBounces());
-        $clicksStream = Stream::factory(JsonLoader::getClicks());
-        $forwardsStream = Stream::factory(JsonLoader::getForwards());
-        $unsubscribesStream = Stream::factory(JsonLoader::getOptOuts());
-        $sendsStream = Stream::factory(JsonLoader::getSends());
-        $opensStream = Stream::factory(JsonLoader::getOpens());
-        $summaryStream = Stream::factory(JsonLoader::getSummary());
-        $mock = new Mock([
-            new Response(200, array(), $bouncesStream),
-            new Response(200, array(), $clicksStream),
-            new Response(200, array(), $forwardsStream),
-            new Response(200, array(), $unsubscribesStream),
-            new Response(200, array(), $sendsStream),
-            new Response(200, array(), $opensStream),
-            new Response(200, array(), $summaryStream)
+        $bounces = JsonLoader::getBounces();
+        $clicks = JsonLoader::getClicks();
+        $forwards = JsonLoader::getForwards();
+        $unsubscribes = JsonLoader::getOptOuts();
+        $sends = JsonLoader::getSends();
+        $opens = JsonLoader::getOpens();
+        $summary = JsonLoader::getSummary();
+
+        $mock = new MockHandler([
+            new Response(200, array(), $bounces),
+            new Response(200, array(), $clicks),
+            new Response(200, array(), $forwards),
+            new Response(200, array(), $unsubscribes),
+            new Response(200, array(), $sends),
+            new Response(200, array(), $opens),
+            new Response(200, array(), $summary)
         ]);
-        self::$client->getEmitter()->attach($mock);
+
+        $handlerStack = HandlerStack::create($mock);
+        self::$client = new Client(['handler' => $handlerStack]);
     }
 
     public function testGetBounces()
     {
         $response = self::$client->get('/');
 
-        $responseJson = $response->json();
+        $responseJson = json_decode($response->getBody(), true);
         $resultSet = new ResultSet($responseJson['results'], $responseJson['meta']);
 
         $bounceActivity = BounceActivity::create($resultSet->results[0]);
@@ -73,7 +75,7 @@ class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $responseJson = $response->json();
+        $responseJson = json_decode($response->getBody(), true);
         $resultSet = new ResultSet($responseJson['results'], $responseJson['meta']);
 
         $clickActivity = ClickActivity::create($resultSet->results[0]);
@@ -97,7 +99,7 @@ class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $responseJson = $response->json();
+        $responseJson = json_decode($response->getBody(), true);
         $resultSet = new ResultSet($responseJson['results'], $responseJson['meta']);
 
         $forwardActivity = ForwardActivity::create($resultSet->results[0]);
@@ -120,7 +122,7 @@ class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $responseJson = $response->json();
+        $responseJson = json_decode($response->getBody(), true);
         $resultSet = new ResultSet($responseJson['results'], $responseJson['meta']);
 
         $unsubscribeActivity = UnsubscribeActivity::create($resultSet->results[0]);
@@ -145,7 +147,7 @@ class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $responseJson = $response->json();
+        $responseJson = json_decode($response->getBody(), true);
         $resultSet = new ResultSet($responseJson['results'], $responseJson['meta']);
 
         $sendActivity = SendActivity::create($resultSet->results[0]);
@@ -168,7 +170,7 @@ class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $responseJson = $response->json();
+        $responseJson = json_decode($response->getBody(), true);
         $resultSet = new ResultSet($responseJson['results'], $responseJson['meta']);
 
         $openActivity = OpenActivity::create($resultSet->results[0]);
@@ -191,7 +193,7 @@ class CampaignTrackingServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $summary = TrackingSummary::create($response->json());
+        $summary = TrackingSummary::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\Tracking\TrackingSummary', $summary);
         $this->assertEquals(15, $summary->sends);
         $this->assertEquals(10, $summary->opens);

@@ -5,38 +5,40 @@ use Ctct\Components\Contacts\Contact;
 
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Subscriber\Mock;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Message\Response;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 
-class ContactServiceUnitTest extends PHPUnit_Framework_TestCase
+class ContactServiceUnitTest extends PHPUnit\Framework\TestCase
 {
     /**
      * @var Client
      */
     private static $client;
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass() : void
     {
-        self::$client = new Client();
-        $contactsStream = Stream::factory(JsonLoader::getContactsJson());
-        $contactsNoNextStream = Stream::factory(JsonLoader::getContactsNoNextJson());
-        $contactStream = Stream::factory(JsonLoader::getContactJson());
-        $mock = new Mock([
-            new Response(200, array(), $contactsStream),
-            new Response(200, array(), $contactsNoNextStream),
-            new Response(200, array(), $contactStream),
-            new Response(201, array(), $contactStream),
+        $contacts = JsonLoader::getContactsJson();
+        $contactsNoNext = JsonLoader::getContactsNoNextJson();
+        $contact = JsonLoader::getContactJson();
+
+        $mock = new MockHandler([
+            new Response(200, array(), $contacts),
+            new Response(200, array(), $contactsNoNext),
+            new Response(200, array(), $contact),
+            new Response(201, array(), $contact),
             new Response(204, array()),
             new Response(400, array()),
-            new Response(200, array(), $contactStream)
+            new Response(200, array(), $contact)
         ]);
-        self::$client->getEmitter()->attach($mock);
+
+        $handlerStack = HandlerStack::create($mock);
+        self::$client = new Client(['handler' => $handlerStack]);
     }
 
     public function testGetContacts()
     {
-        $response = self::$client->get('/')->json();
+        $response = json_decode(self::$client->get('/')->getBody(), true);
         $result = new ResultSet($response['results'], $response['meta']);
 
         $this->assertInstanceOf('Ctct\Components\ResultSet', $result);
@@ -95,7 +97,7 @@ class ContactServiceUnitTest extends PHPUnit_Framework_TestCase
 
     public function testGetContactsNoNextLink()
     {
-        $response = self::$client->get('/')->json();
+        $response = json_decode(self::$client->get('/')->getBody(), true);
         $result = new ResultSet($response['results'], $response['meta']);
 
         $this->assertInstanceOf('Ctct\Components\ResultSet', $result);
@@ -156,7 +158,7 @@ class ContactServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->get('/');
 
-        $contact = Contact::create($response->json());
+        $contact = Contact::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\Contacts\Contact', $contact);
         $this->assertEquals(238, $contact->id);
         $this->assertEquals("ACTIVE", $contact->status);
@@ -217,7 +219,7 @@ class ContactServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->post('/');
 
-        $contact = Contact::create($response->json());
+        $contact = Contact::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\Contacts\Contact', $contact);
         $this->assertEquals(238, $contact->id);
         $this->assertEquals("ACTIVE", $contact->status);
@@ -294,7 +296,7 @@ class ContactServiceUnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->put('/');
 
-        $contact = Contact::create($response->json());
+        $contact = Contact::create(json_decode($response->getBody(), true));
         $this->assertInstanceOf('Ctct\Components\Contacts\Contact', $contact);
         $this->assertEquals(238, $contact->id);
         $this->assertEquals("ACTIVE", $contact->status);

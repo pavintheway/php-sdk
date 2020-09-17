@@ -3,11 +3,11 @@
 use Ctct\Auth\CtctOAuth2;
 use Ctct\Util\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\Message\Response;
-use GuzzleHttp\Stream\Stream;
-use GuzzleHttp\Subscriber\Mock;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Psr7\Response;
 
-class CtctOAuth2UnitTest extends PHPUnit_Framework_TestCase
+class CtctOAuth2UnitTest extends PHPUnit\Framework\TestCase
 {
     /**
      * @var Client
@@ -23,19 +23,22 @@ class CtctOAuth2UnitTest extends PHPUnit_Framework_TestCase
     private $clientSecret = "clientSecret";
     private $redirectUri = "redirectUri";
 
-    public static function setUpBeforeClass()
+    public static function setUpBeforeClass() : void
     {
         self::$client = new Client();
-        $tokenInfoStream = Stream::factory(JsonLoader::getTokenInfoJson());
-        $accessTokenStream = Stream::factory(JsonLoader::getAccessTokenJson());
-        $mock = new Mock([
-            new Response(200, array(), $tokenInfoStream),
-            new Response(200, array(), $accessTokenStream)
+        $tokenInfo = JsonLoader::getTokenInfoJson();
+        $accessToken = JsonLoader::getAccessTokenJson();
+
+        $mock = new MockHandler([
+            new Response(200, array(), $tokenInfo),
+            new Response(200, array(), $accessToken)
         ]);
-        self::$client->getEmitter()->attach($mock);
+
+        $handlerStack = HandlerStack::create($mock);
+        self::$client = new Client(['handler' => $handlerStack]);
     }
 
-    public function setUp()
+    public function setUp() : void
     {
         $this->ctctOAuth2 = new CtctOAuth2($this->apiKey, $this->clientSecret, $this->redirectUri);
     }
@@ -44,7 +47,7 @@ class CtctOAuth2UnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->post('/');
 
-        $token = $response->json();
+        $token = json_decode($response->getBody(), true);
 
         $this->assertEquals("f98b207c-ta99b-4938-b523-3cc2895f5420", $token['client_id']);
         $this->assertEquals("ctcttest", $token['user_name']);
@@ -55,7 +58,7 @@ class CtctOAuth2UnitTest extends PHPUnit_Framework_TestCase
     {
         $response = self::$client->post('/');
 
-        $token = $response->json();
+        $token = json_decode($response->getBody(), true);
 
         $this->assertEquals("v6574b42-a5bc-4574-a87f-5c9d1202e316", $token['access_token']);
         $this->assertEquals("308874923", $token['expires_in']);

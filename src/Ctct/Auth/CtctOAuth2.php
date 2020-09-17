@@ -5,7 +5,9 @@ use Ctct\Exceptions\CtctException;
 use Ctct\Exceptions\OAuth2Exception;
 use Ctct\Util\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * Class that implements necessary functionality to obtain an access token from a user
@@ -50,9 +52,8 @@ class CtctOAuth2
         }
 
         $baseUrl = Config::get('auth.base_url') . Config::get('auth.authorization_endpoint');
-        $request = $this->client->createRequest("GET", $baseUrl);
-        $request->setQuery($params);
-        return $request->getUrl();
+        $request = new Request("GET", Uri::withQueryValues(new Uri($baseUrl), $params));
+        return (string) $request->getURI();
     }
 
     /**
@@ -72,12 +73,11 @@ class CtctOAuth2
         );
 
         $baseUrl = Config::get('auth.base_url') . Config::get('auth.token_endpoint');
-        $request = $this->client->createRequest("POST", $baseUrl);
-        $request->setQuery($params);
+        $request = new Request("POST", Uri::withQueryValues(new Uri($baseUrl), $params));
 
         try {
-            $response = $this->client->send($request)->json();
-        } catch (ClientException $e) {
+            $response = json_decode($this->client->send($request)->getBody(), true);
+        } catch (GuzzleException $e) {
             throw $this->convertException($e);
         }
 
@@ -93,25 +93,24 @@ class CtctOAuth2
     public function getTokenInfo($accessToken)
     {
         $baseUrl = Config::get('auth.base_url') . Config::get('auth.token_info');
-        $request = $this->client->createRequest("POST", $baseUrl);
-        $request->setQuery(array("access_token" => $accessToken));
+        $request = new Request("POST", Uri::withQueryValues(new Uri($baseUrl), ['access_token' => $accessToken]));
 
         try {
-            $response = $this->client->send($request)->json();
-        } catch (ClientException $e) {
+            $response = json_decode($this->client->send($request)->getBody(), true);
+        } catch (GuzzleException $e) {
             throw $this->convertException($e);
         }
         return $response;
     }
 
     /**
-     * @param ClientException $exception
+     * @param GuzzleException $exception
      * @return OAuth2Exception
      */
     private function convertException($exception) {
         $oauth2Exception = new OAuth2Exception($exception->getResponse()->getReasonPhrase(), $exception->getCode());
         $oauth2Exception->setUrl($exception->getResponse()->getEffectiveUrl());
-        $oauth2Exception->setErrors(array(json_decode($exception->getResponse()->getBody()->getContents())));
+        $oauth2Exception->setErrors(array(json_decode($exception->getResponse()->getBody(), true)));
         return $oauth2Exception;
     }
 }
