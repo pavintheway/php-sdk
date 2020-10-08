@@ -34,13 +34,7 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.activities');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -49,7 +43,7 @@ class ActivityService extends BaseService
         }
 
         $activities = array();
-        foreach ($response->json() as $activity) {
+        foreach (json_decode((string) $response->getBody(), true) as $activity) {
             $activities[] = Activity::create($activity);
         }
         return $activities;
@@ -74,7 +68,7 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -97,7 +91,7 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -126,7 +120,7 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -149,7 +143,7 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -172,7 +166,7 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -204,7 +198,7 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -233,6 +227,6 @@ class ActivityService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 }

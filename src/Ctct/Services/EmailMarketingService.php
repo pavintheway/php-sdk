@@ -41,7 +41,7 @@ class EmailMarketingService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Campaign::create($response->json());
+        return Campaign::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -59,13 +59,7 @@ class EmailMarketingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.campaigns');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -73,7 +67,7 @@ class EmailMarketingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $campaigns = array();
         foreach ($body['results'] as $contact) {
             $campaigns[] = Campaign::createSummary($contact);
@@ -101,7 +95,7 @@ class EmailMarketingService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Campaign::create($response->json());
+        return Campaign::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -146,7 +140,7 @@ class EmailMarketingService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Campaign::create($response->json());
+        return Campaign::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -166,6 +160,6 @@ class EmailMarketingService extends BaseService
             throw parent::convertException($e);
         }
 
-        return CampaignPreview::create($response->json());
+        return CampaignPreview::create(json_decode((string) $response->getBody(), true));
     }
 }

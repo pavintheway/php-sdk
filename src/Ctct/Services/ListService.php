@@ -28,13 +28,7 @@ class ListService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.lists');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -43,7 +37,7 @@ class ListService extends BaseService
         }
 
         $lists = array();
-        foreach ($response->json() as $contact) {
+        foreach (json_decode((string) $response->getBody(), true) as $contact) {
             $lists[] = ContactList::create($contact);
         }
 
@@ -70,7 +64,7 @@ class ListService extends BaseService
             throw parent::convertException($e);
         }
 
-        return ContactList::create($response->json());
+        return ContactList::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -93,7 +87,7 @@ class ListService extends BaseService
             throw parent::convertException($e);
         }
 
-        return ContactList::create($response->json());
+        return ContactList::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -137,6 +131,6 @@ class ListService extends BaseService
             throw parent::convertException($e);
         }
 
-        return ContactList::create($response->json());
+        return ContactList::create(json_decode((string) $response->getBody(), true));
     }
 }

@@ -2,14 +2,10 @@
 namespace Ctct\Services;
 
 use Ctct\Exceptions\CtctException;
-use Ctct\Guzzle7Shim\JsonResponse;
 use Ctct\Util\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Middleware;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
-use Psr\Http\Message\ResponseInterface;
 
 /**
  * Super class for all services
@@ -55,19 +51,7 @@ abstract class BaseService
     {
         $this->apiKey = $apiKey;
 
-        // This avoids having to rewrite the calls to Response::getBody()->json() in the Services
-        $stack = HandlerStack::create();
-        $stack->push(Middleware::mapResponse(function (ResponseInterface $response) {
-            return new JsonResponse(
-                $response->getStatusCode(),
-                $response->getHeaders(),
-                $response->getBody(),
-                $response->getProtocolVersion(),
-                $response->getReasonPhrase()
-            );
-        }));
-
-        $this->client = new Client(['handler' => $stack]);
+        $this->client = new Client();
     }
 
     /**
@@ -79,10 +63,11 @@ abstract class BaseService
         return $this->client;
     }
 
-    protected function createBaseRequest($accessToken, $method, $baseUrl) {
+    protected function createBaseRequest($accessToken, $method, $baseUrl, $params = []) {
+        $params = array_merge($params, ['api_key' => $this->apiKey]);
         return new Request(
             $method,
-            Uri::withQueryValues(new Uri($baseUrl), ['api_key' => $this->apiKey]),
+            Uri::withQueryValues(new Uri($baseUrl), $params),
             $this->getHeaders($accessToken)
         );
     }
@@ -94,7 +79,7 @@ abstract class BaseService
      */
     protected function convertException($exception)
     {
-        $ctctException = new CtctException($exception->getResponse()->getReasonPhrase(), $exception->getCode());
+        $ctctException = new CtctException($exception->getMessage(), $exception->getCode());
         $ctctException->setUrl((string) $exception->getRequest()->getUri());
         $ctctException->setErrors(json_decode($exception->getResponse()->getBody()->getContents()));
         return $ctctException;

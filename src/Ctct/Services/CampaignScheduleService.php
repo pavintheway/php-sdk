@@ -37,7 +37,7 @@ class CampaignScheduleService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Schedule::create($response->json());
+        return Schedule::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -60,7 +60,7 @@ class CampaignScheduleService extends BaseService
         }
 
         $schedules = array();
-        foreach ($response->json() as $schedule) {
+        foreach (json_decode((string) $response->getBody(), true) as $schedule) {
             $schedules[] = Schedule::create($schedule);
         }
         return $schedules;
@@ -86,7 +86,7 @@ class CampaignScheduleService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Schedule::create($response->json());
+        return Schedule::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -110,7 +110,7 @@ class CampaignScheduleService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Schedule::create($response->json());
+        return Schedule::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -157,6 +157,6 @@ class CampaignScheduleService extends BaseService
             throw parent::convertException($e);
         }
 
-        return TestSend::create($response->json());
+        return TestSend::create(json_decode((string) $response->getBody(), true));
     }
 }

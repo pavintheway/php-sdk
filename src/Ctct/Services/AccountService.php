@@ -29,13 +29,7 @@ class AccountService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.account_verified_addresses');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -44,7 +38,7 @@ class AccountService extends BaseService
         }
 
         $verifiedAddresses = array();
-        foreach ($response->json() as $verifiedAddress) {
+        foreach (json_decode((string) $response->getBody(), true) as $verifiedAddress) {
             $verifiedAddresses[] = VerifiedEmailAddress::create($verifiedAddress);
         }
 
@@ -73,7 +67,7 @@ class AccountService extends BaseService
         }
 
         $verifiedAddresses = array();
-        foreach ($response->json() as $verifiedAddress) {
+        foreach (json_decode((string) $response->getBody(), true) as $verifiedAddress) {
             $verifiedAddresses[] = VerifiedEmailAddress::create($verifiedAddress);
         }
 
@@ -98,7 +92,7 @@ class AccountService extends BaseService
             throw parent::convertException($e);
         }
 
-        return AccountInfo::create($response->json());
+        return AccountInfo::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -121,6 +115,6 @@ class AccountService extends BaseService
             throw parent::convertException($e);
         }
 
-        return AccountInfo::create($response->json());
+        return AccountInfo::create(json_decode((string) $response->getBody(), true));
     }
 }

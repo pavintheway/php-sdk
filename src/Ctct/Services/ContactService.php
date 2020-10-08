@@ -47,7 +47,7 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $contacts = array();
         foreach ($body['results'] as $contact) {
             $contacts[] = Contact::create($contact);
@@ -87,7 +87,7 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $contacts = array();
         foreach ($body['results'] as $contact) {
             $contacts[] = Contact::create($contact);
@@ -114,7 +114,7 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Contact::create($response->json());
+        return Contact::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -147,7 +147,7 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Contact::create($response->json());
+        return Contact::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -201,6 +201,6 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Contact::create($response->json());
+        return Contact::create(json_decode((string) $response->getBody(), true));
     }
 }

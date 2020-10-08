@@ -32,13 +32,7 @@ class LibraryService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.library_files');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -46,7 +40,7 @@ class LibraryService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $libraryFiles = array();
         foreach ($body['results'] as $file) {
             $libraryFiles[] = File::create($file);
@@ -74,13 +68,7 @@ class LibraryService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.library_files_by_folder'), $folderId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -88,7 +76,7 @@ class LibraryService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $libraryFiles = array();
         foreach ($body['results'] as $file) {
             $libraryFiles[] = File::create($file);
@@ -116,7 +104,7 @@ class LibraryService extends BaseService
             throw parent::convertException($e);
         }
 
-        return File::create($response->json());
+        return File::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -156,13 +144,7 @@ class LibraryService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.library_folders');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -170,7 +152,7 @@ class LibraryService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $libraryFolders = array();
         foreach ($body['results'] as $folder) {
             $libraryFolders[] = Folder::create($folder);
@@ -198,7 +180,7 @@ class LibraryService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         return Folder::create($body);
     }
 
@@ -306,7 +288,7 @@ class LibraryService extends BaseService
             throw parent::convertException($e);
     	}
     	
-    	$body = $response->json();
+    	$body = json_decode((string) $response->getBody(), true);
     	return Folder::create($body);
     }
     
@@ -329,7 +311,7 @@ class LibraryService extends BaseService
         }
 
         $fileUploadStatuses = array();
-        foreach ($response->json() as $fileUploadStatus) {
+        foreach (json_decode((string) $response->getBody(), true) as $fileUploadStatus) {
             $fileUploadStatuses[] = FileUploadStatus::create($fileUploadStatus);
         }
         return $fileUploadStatuses;

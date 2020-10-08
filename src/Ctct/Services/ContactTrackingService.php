@@ -37,13 +37,7 @@ class ContactTrackingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact_tracking_bounces'), $contactId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -51,7 +45,7 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $bounces = array();
         foreach ($body['results'] as $bounceActivity) {
             $bounces[] = BounceActivity::create($bounceActivity);
@@ -76,13 +70,7 @@ class ContactTrackingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact_tracking_clicks'), $contactId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -90,7 +78,7 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $clicks = array();
         foreach ($body['results'] as $click_activity) {
             $clicks[] = ClickActivity::create($click_activity);
@@ -115,13 +103,7 @@ class ContactTrackingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact_tracking_forwards'), $contactId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -129,7 +111,7 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $forwards = array();
         foreach ($body['results'] as $forward_activity) {
             $forwards[] = ForwardActivity::create($forward_activity);
@@ -154,13 +136,7 @@ class ContactTrackingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact_tracking_opens'), $contactId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -168,7 +144,7 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $opens = array();
         foreach ($body['results'] as $open_activity) {
             $opens[] = OpenActivity::create($open_activity);
@@ -193,13 +169,7 @@ class ContactTrackingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact_tracking_sends'), $contactId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -207,7 +177,7 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $sends = array();
         foreach ($body['results'] as $send_activity) {
             $sends[] = SendActivity::create($send_activity);
@@ -232,13 +202,7 @@ class ContactTrackingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact_tracking_unsubscribes'), $contactId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -246,7 +210,7 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $opt_outs = array();
         foreach ($body['results'] as $opt_out_activity) {
             $opt_outs[] = UnsubscribeActivity::create($opt_out_activity);
@@ -274,6 +238,6 @@ class ContactTrackingService extends BaseService
             throw parent::convertException($e);
         }
 
-        return TrackingSummary::create($response->json());
+        return TrackingSummary::create(json_decode((string) $response->getBody(), true));
     }
 }
