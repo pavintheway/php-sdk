@@ -12,7 +12,7 @@ use Ctct\Components\Tracking\UnsubscribeActivity;
 use Ctct\Components\Tracking\SendActivity;
 use Ctct\Components\Tracking\TrackingSummary;
 use Ctct\Components\ResultSet;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\BadResponseException;
 
 /**
  * Performs all actions pertaining to Constant Contact Campaign Tracking
@@ -49,7 +49,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -87,7 +87,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -126,7 +126,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -165,7 +165,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -204,7 +204,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -243,7 +243,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -271,7 +271,7 @@ class CampaignTrackingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 

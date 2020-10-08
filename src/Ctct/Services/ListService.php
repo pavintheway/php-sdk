@@ -4,8 +4,8 @@ namespace Ctct\Services;
 use Ctct\Exceptions\CtctException;
 use Ctct\Util\Config;
 use Ctct\Components\Contacts\ContactList;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to Constant Contact Lists
@@ -38,7 +38,7 @@ class ListService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -62,12 +62,11 @@ class ListService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.lists');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($list));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($list));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -86,12 +85,11 @@ class ListService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.list'), $list->id);
 
         $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl);
-        $stream = Stream::factory(json_encode($list));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($list));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -113,7 +111,7 @@ class ListService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -135,7 +133,7 @@ class ListService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 

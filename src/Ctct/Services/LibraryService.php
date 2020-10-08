@@ -8,10 +8,9 @@ use Ctct\Components\Library\Folder;
 use Ctct\Components\ResultSet;
 use Ctct\Exceptions\IllegalArgumentException;
 use Ctct\Util\Config;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Post\PostBody;
-use GuzzleHttp\Post\PostFile;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\MultipartStream;
+use GuzzleHttp\Psr7\Stream;
 
 class LibraryService extends BaseService
 {
@@ -43,7 +42,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -85,7 +84,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -113,7 +112,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -135,7 +134,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -167,7 +166,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -195,7 +194,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -218,7 +217,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -260,18 +259,27 @@ class LibraryService extends BaseService
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
         $request->setHeader("Content-Type", "multipart/form-data");
 
-        $body = new PostBody();
-        $body->setField("folder_id", $folderId);
-        $body->setField("file_name", $fileName);
-        $body->setField("file_type", $fileType);
-        $body->setField("description", $description);
-        $body->setField("source", $source);
-        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->setBody($body);
+        $stream = new MultipartStream(
+            [
+                ['name' => 'folder_id', 'contents' => $folderId],
+                ['name' => 'file_name', 'contents' => $fileName],
+                ['name' => 'file_type', 'contents' => $fileType],
+                ['name' => 'description', 'contents' => $description],
+                ['name' => 'source', 'contents' => $source],
+                ['name' => $fileName, 'contents' => fopen($fileLocation, 'r')],
+            ]
+        );
+//        $body = new PostBody();
+//        $body->setField("folder_id", $folderId);
+//        $body->setField("file_name", $fileName);
+//        $body->setField("file_type", $fileType);
+//        $body->setField("description", $description);
+//        $body->setField("source", $source);
+//        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -290,13 +298,12 @@ class LibraryService extends BaseService
     	
     	$request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
     	
-    	$stream = Stream::factory(json_encode($folder));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($folder));
     	
     	try {
-    		$response = parent::getClient()->send($request);
-    	} catch (ClientException $e) {
-    		throw parent::convertException($e);
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
+            throw parent::convertException($e);
     	}
     	
     	$body = $response->json();
@@ -317,7 +324,7 @@ class LibraryService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 

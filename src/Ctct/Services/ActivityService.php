@@ -6,7 +6,7 @@ use Ctct\Util\Config;
 use Ctct\Components\Activities\Activity;
 use Ctct\Components\Activities\AddContacts;
 use Ctct\Components\Activities\ExportContacts;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Post\PostBody;
 use GuzzleHttp\Post\PostFile;
 use GuzzleHttp\Psr7\Stream;
@@ -44,7 +44,7 @@ class ActivityService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -70,7 +70,7 @@ class ActivityService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -90,11 +90,10 @@ class ActivityService extends BaseService
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($addContacts));
-        $request->withBody($stream);
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -120,11 +119,10 @@ class ActivityService extends BaseService
         $body->setField("lists", $lists);
         $body->setField("file_name", $fileName);
         $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->withBody($body);
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($body));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -144,11 +142,10 @@ class ActivityService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.clear_lists_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode(array("lists" => $lists)));
-        $request->withBody($stream);
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -168,11 +165,10 @@ class ActivityService extends BaseService
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($exportContacts));
-        $request->withBody($stream);
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -201,11 +197,10 @@ class ActivityService extends BaseService
         }
 
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($payload));
-        $request->withBody($stream);
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -231,11 +226,10 @@ class ActivityService extends BaseService
         $body->setField("lists", $lists);
         $body->setField("file_name", $fileName);
         $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->withBody($body);
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 

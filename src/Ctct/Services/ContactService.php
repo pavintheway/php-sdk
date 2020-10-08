@@ -6,7 +6,7 @@ use Ctct\Util\Config;
 use Ctct\Components\Contacts\Contact;
 use Ctct\Components\ResultSet;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to Constant Contact Contacts
@@ -139,11 +139,10 @@ class ContactService extends BaseService
                 $query->add($name, $value);
             }
         }
-        $stream = Stream::factory(json_encode($contact));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($contact));
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request->withBody($stream));
         } catch (ClientException $e) {
             throw parent::convertException($e);
         }
@@ -194,8 +193,7 @@ class ContactService extends BaseService
                 $query->add($name, $value);
             }
         }
-        $stream = Stream::factory(json_encode($contact));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($contact));
 
         try {
             $response = parent::getClient()->send($request);
