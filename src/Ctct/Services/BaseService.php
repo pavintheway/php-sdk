@@ -80,12 +80,11 @@ abstract class BaseService
     }
 
     protected function createBaseRequest($accessToken, $method, $baseUrl) {
-        $request = new Request(
+        return new Request(
             $method,
             Uri::withQueryValues(new Uri($baseUrl), ['api_key' => $this->apiKey]),
             $this->getHeaders($accessToken)
         );
-        return $request;
     }
 
     /**

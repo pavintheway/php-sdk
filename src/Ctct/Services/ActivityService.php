@@ -9,7 +9,7 @@ use Ctct\Components\Activities\ExportContacts;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Post\PostBody;
 use GuzzleHttp\Post\PostFile;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to scheduling Constant Contact Activities
@@ -89,8 +89,8 @@ class ActivityService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.add_contacts_activity');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($addContacts));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($addContacts));
+        $request->withBody($stream);
 
         try {
             $response = parent::getClient()->send($request);
@@ -120,7 +120,7 @@ class ActivityService extends BaseService
         $body->setField("lists", $lists);
         $body->setField("file_name", $fileName);
         $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->setBody($body);
+        $request->withBody($body);
 
         try {
             $response = parent::getClient()->send($request);
@@ -143,8 +143,8 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.clear_lists_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $stream = Stream::factory(json_encode(array("lists" => $lists)));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode(array("lists" => $lists)));
+        $request->withBody($stream);
 
         try {
             $response = parent::getClient()->send($request);
@@ -167,8 +167,8 @@ class ActivityService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.export_contacts_activity');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($exportContacts));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($exportContacts));
+        $request->withBody($stream);
 
         try {
             $response = parent::getClient()->send($request);
@@ -200,8 +200,8 @@ class ActivityService extends BaseService
             $payload['import_data'][] = array('email_addresses' => array($emailAddress));
         }
 
-        $stream = Stream::factory(json_encode($payload));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($payload));
+        $request->withBody($stream);
 
         try {
             $response = parent::getClient()->send($request);
@@ -231,7 +231,7 @@ class ActivityService extends BaseService
         $body->setField("lists", $lists);
         $body->setField("file_name", $fileName);
         $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->setBody($body);
+        $request->withBody($body);
 
         try {
             $response = parent::getClient()->send($request);
