@@ -5,7 +5,7 @@ use Ctct\Exceptions\CtctException;
 use Ctct\Exceptions\OAuth2Exception;
 use Ctct\Util\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\BadResponseException;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Uri;
 
@@ -52,8 +52,7 @@ class CtctOAuth2
         }
 
         $baseUrl = Config::get('auth.base_url') . Config::get('auth.authorization_endpoint');
-        $request = new Request("GET", Uri::withQueryValues(new Uri($baseUrl), $params));
-        return (string) $request->getURI();
+        return (string) Uri::withQueryValues(new Uri($baseUrl), $params);
     }
 
     /**
@@ -77,7 +76,7 @@ class CtctOAuth2
 
         try {
             $response = json_decode($this->client->send($request)->getBody(), true);
-        } catch (GuzzleException $e) {
+        } catch (BadResponseException $e) {
             throw $this->convertException($e);
         }
 
@@ -97,14 +96,14 @@ class CtctOAuth2
 
         try {
             $response = json_decode($this->client->send($request)->getBody(), true);
-        } catch (GuzzleException $e) {
+        } catch (BadResponseException $e) {
             throw $this->convertException($e);
         }
         return $response;
     }
 
     /**
-     * @param GuzzleException $exception
+     * @param BadResponseException $exception
      * @return OAuth2Exception
      */
     private function convertException($exception) {

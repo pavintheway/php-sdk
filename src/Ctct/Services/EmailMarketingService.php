@@ -6,8 +6,8 @@ use Ctct\Util\Config;
 use Ctct\Components\EmailMarketing\Campaign;
 use Ctct\Components\EmailMarketing\CampaignPreview;
 use Ctct\Components\ResultSet;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to Constant Contact Campaigns
@@ -33,16 +33,15 @@ class EmailMarketingService extends BaseService
         }
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($campaign));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($campaign));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Campaign::create($response->json());
+        return Campaign::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -60,21 +59,15 @@ class EmailMarketingService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.campaigns');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode((string) $response->getBody(), true);
         $campaigns = array();
         foreach ($body['results'] as $contact) {
             $campaigns[] = Campaign::createSummary($contact);
@@ -98,11 +91,11 @@ class EmailMarketingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Campaign::create($response->json());
+        return Campaign::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -120,7 +113,7 @@ class EmailMarketingService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -139,16 +132,15 @@ class EmailMarketingService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.campaign'), $campaign->id);
 
         $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl);
-        $stream = Stream::factory(json_encode($campaign));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($campaign));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Campaign::create($response->json());
+        return Campaign::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -164,10 +156,10 @@ class EmailMarketingService extends BaseService
         $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return CampaignPreview::create($response->json());
+        return CampaignPreview::create(json_decode((string) $response->getBody(), true));
     }
 }

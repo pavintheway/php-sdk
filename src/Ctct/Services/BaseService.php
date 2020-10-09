@@ -4,7 +4,8 @@ namespace Ctct\Services;
 use Ctct\Exceptions\CtctException;
 use Ctct\Util\Config;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Uri;
 
 /**
  * Super class for all services
@@ -49,6 +50,7 @@ abstract class BaseService
     public function __construct($apiKey)
     {
         $this->apiKey = $apiKey;
+
         $this->client = new Client();
     }
 
@@ -61,22 +63,24 @@ abstract class BaseService
         return $this->client;
     }
 
-    protected function createBaseRequest($accessToken, $method, $baseUrl) {
-        $request = $this->client->createRequest($method, $baseUrl);
-        $request->getQuery()->set("api_key", $this->apiKey);
-        $request->setHeaders($this->getHeaders($accessToken));
-        return $request;
+    protected function createBaseRequest($accessToken, $method, $baseUrl, $params = []) {
+        $params = array_merge($params, ['api_key' => $this->apiKey]);
+        return new Request(
+            $method,
+            Uri::withQueryValues(new Uri($baseUrl), $params),
+            $this->getHeaders($accessToken)
+        );
     }
 
     /**
-     * Turns a ClientException into a CtctException - like magic.
-     * @param ClientException $exception - Guzzle ClientException
+     * Turns a BadResponseException into a CtctException - like magic.
+     * @param BadResponseException $exception
      * @return CtctException
      */
     protected function convertException($exception)
     {
-        $ctctException = new CtctException($exception->getResponse()->getReasonPhrase(), $exception->getCode());
-        $ctctException->setUrl($exception->getResponse()->getEffectiveUrl());
+        $ctctException = new CtctException($exception->getMessage(), $exception->getCode());
+        $ctctException->setUrl((string) $exception->getRequest()->getUri());
         $ctctException->setErrors(json_decode($exception->getResponse()->getBody()->getContents()));
         return $ctctException;
     }

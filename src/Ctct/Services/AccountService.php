@@ -5,8 +5,8 @@ use Ctct\Exceptions\CtctException;
 use Ctct\Util\Config;
 use Ctct\Components\Account\VerifiedEmailAddress;
 use Ctct\Components\Account\AccountInfo;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to scheduling Constant Contact Account's
@@ -29,22 +29,16 @@ class AccountService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.account_verified_addresses');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
         $verifiedAddresses = array();
-        foreach ($response->json() as $verifiedAddress) {
+        foreach (json_decode((string) $response->getBody(), true) as $verifiedAddress) {
             $verifiedAddresses[] = VerifiedEmailAddress::create($verifiedAddress);
         }
 
@@ -64,17 +58,16 @@ class AccountService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.account_verified_addresses');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode(array(array("email_address" => $emailAddress))));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode(array(array("email_address" => $emailAddress))));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
         $verifiedAddresses = array();
-        foreach ($response->json() as $verifiedAddress) {
+        foreach (json_decode((string) $response->getBody(), true) as $verifiedAddress) {
             $verifiedAddresses[] = VerifiedEmailAddress::create($verifiedAddress);
         }
 
@@ -95,11 +88,11 @@ class AccountService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return AccountInfo::create($response->json());
+        return AccountInfo::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -114,15 +107,14 @@ class AccountService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.account_info');
 
         $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl);
-        $stream = Stream::factory(json_encode($accountInfo));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($accountInfo));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return AccountInfo::create($response->json());
+        return AccountInfo::create(json_decode((string) $response->getBody(), true));
     }
 }

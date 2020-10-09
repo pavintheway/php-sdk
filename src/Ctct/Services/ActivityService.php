@@ -6,10 +6,9 @@ use Ctct\Util\Config;
 use Ctct\Components\Activities\Activity;
 use Ctct\Components\Activities\AddContacts;
 use Ctct\Components\Activities\ExportContacts;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Post\PostBody;
-use GuzzleHttp\Post\PostFile;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\MultipartStream;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to scheduling Constant Contact Activities
@@ -34,22 +33,16 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.activities');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
         $activities = array();
-        foreach ($response->json() as $activity) {
+        foreach (json_decode((string) $response->getBody(), true) as $activity) {
             $activities[] = Activity::create($activity);
         }
         return $activities;
@@ -70,11 +63,11 @@ class ActivityService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -89,16 +82,15 @@ class ActivityService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.add_contacts_activity');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($addContacts));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($addContacts));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -114,21 +106,22 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.add_contacts_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $request->setHeader("Content-Type", "multipart/form-data");
 
-        $body = new PostBody();
-        $body->setField("lists", $lists);
-        $body->setField("file_name", $fileName);
-        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->setBody($body);
+        $stream = new MultipartStream(
+            [
+                ['name' => 'file_name', 'contents' => $fileName],
+                ['name' => 'lists', 'contents' => $lists],
+                ['name' => 'data', 'contents' => fopen($fileLocation, 'r')],
+            ]
+        );
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withHeader("Content-Type", "multipart/form-data")->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -143,16 +136,15 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.clear_lists_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $stream = Stream::factory(json_encode(array("lists" => $lists)));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode(array("lists" => $lists)));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -167,16 +159,15 @@ class ActivityService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.export_contacts_activity');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($exportContacts));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($exportContacts));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -200,16 +191,15 @@ class ActivityService extends BaseService
             $payload['import_data'][] = array('email_addresses' => array($emailAddress));
         }
 
-        $stream = Stream::factory(json_encode($payload));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($payload));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -217,7 +207,7 @@ class ActivityService extends BaseService
      * @param string $accessToken - Constant Contact OAuth2 access token
      * @param string $fileName - The name of the file (ie: contacts.csv)
      * @param string $fileLocation - The location of the file on the server, this method uses fopen()
-     * @param string $lists - Comma separated list of ContactList id's to add the contacts to
+     * @param string $lists - Comma separated list of ContactList id's to remove the contacts from
      * @return Activity
      * @throws CtctException
      */
@@ -225,20 +215,21 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.remove_from_lists_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $request->setHeader("Content-Type", "multipart/form-data");
-
-        $body = new PostBody();
-        $body->setField("lists", $lists);
-        $body->setField("file_name", $fileName);
-        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
-        $request->setBody($body);
+        
+        $stream = new MultipartStream(
+            [
+                ['name' => 'file_name', 'contents' => $fileName],
+                ['name' => 'lists', 'contents' => $lists],
+                ['name' => 'data', 'contents' => fopen($fileLocation, 'r')],
+            ]
+        );
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withHeader("Content-Type", "multipart/form-data")->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return Activity::create($response->json());
+        return Activity::create(json_decode((string) $response->getBody(), true));
     }
 }

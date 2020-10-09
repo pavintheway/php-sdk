@@ -4,8 +4,8 @@ namespace Ctct\Services;
 use Ctct\Exceptions\CtctException;
 use Ctct\Util\Config;
 use Ctct\Components\Contacts\ContactList;
-use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Stream\Stream;
+use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\Psr7\Stream;
 
 /**
  * Performs all actions pertaining to Constant Contact Lists
@@ -28,22 +28,16 @@ class ListService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.lists');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
         $lists = array();
-        foreach ($response->json() as $contact) {
+        foreach (json_decode((string) $response->getBody(), true) as $contact) {
             $lists[] = ContactList::create($contact);
         }
 
@@ -62,16 +56,15 @@ class ListService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.lists');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        $stream = Stream::factory(json_encode($list));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($list));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return ContactList::create($response->json());
+        return ContactList::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -86,16 +79,15 @@ class ListService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.list'), $list->id);
 
         $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl);
-        $stream = Stream::factory(json_encode($list));
-        $request->setBody($stream);
+        $stream = \GuzzleHttp\Psr7\stream_for(json_encode($list));
 
         try {
-            $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+            $response = parent::getClient()->send($request->withBody($stream));
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return ContactList::create($response->json());
+        return ContactList::create(json_decode((string) $response->getBody(), true));
     }
 
     /**
@@ -113,7 +105,7 @@ class ListService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
@@ -135,10 +127,10 @@ class ListService extends BaseService
 
         try {
             $response = parent::getClient()->send($request);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
 
-        return ContactList::create($response->json());
+        return ContactList::create(json_decode((string) $response->getBody(), true));
     }
 }
