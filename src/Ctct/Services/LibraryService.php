@@ -239,7 +239,6 @@ class LibraryService extends BaseService
 
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.library_files');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $request->setHeader("Content-Type", "multipart/form-data");
 
         $stream = new MultipartStream(
             [
@@ -248,19 +247,12 @@ class LibraryService extends BaseService
                 ['name' => 'file_type', 'contents' => $fileType],
                 ['name' => 'description', 'contents' => $description],
                 ['name' => 'source', 'contents' => $source],
-                ['name' => $fileName, 'contents' => fopen($fileLocation, 'r')],
+                ['name' => 'data', 'contents' => fopen($fileLocation, 'r')],
             ]
         );
-//        $body = new PostBody();
-//        $body->setField("folder_id", $folderId);
-//        $body->setField("file_name", $fileName);
-//        $body->setField("file_type", $fileType);
-//        $body->setField("description", $description);
-//        $body->setField("source", $source);
-//        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
 
         try {
-            $response = parent::getClient()->send($request->withBody($stream));
+            $response = parent::getClient()->send($request->withHeader("Content-Type", "multipart/form-data")->withBody($stream));
         } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }

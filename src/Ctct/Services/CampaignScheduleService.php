@@ -105,7 +105,7 @@ class CampaignScheduleService extends BaseService
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($schedule));
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request->withBody($stream));
         } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
@@ -152,7 +152,7 @@ class CampaignScheduleService extends BaseService
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($testSend));
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request->withBody($stream));
         } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }

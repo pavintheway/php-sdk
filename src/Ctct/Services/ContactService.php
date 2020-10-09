@@ -33,13 +33,7 @@ class ContactService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.contacts');
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -64,8 +58,6 @@ class ContactService extends BaseService
      *      limit - Specifies the number of results displayed per page of output, from 1 - 500, default = 50.
      *      modified_since - ISO-8601 formatted timestamp.
      *      next - the next link returned from a previous paginated call. May only be used by itself.
-     *      email - full email address string to restrict results by
-     *      status - a contact status to filter results by. Must be one of ACTIVE, OPTOUT, REMOVED, UNCONFIRMED.
      * @return ResultSet
      * @throws CtctException
      */
@@ -73,13 +65,7 @@ class ContactService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.list_contacts'), $listId);
 
-        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl, $params);
 
         try {
             $response = parent::getClient()->send($request);
@@ -132,13 +118,7 @@ class ContactService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.contacts');
 
-        $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl, $params);
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($contact));
 
         try {
@@ -186,17 +166,11 @@ class ContactService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact'), $contact->id);
 
-        $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl);
-        if ($params) {
-            $query = $request->getQuery();
-            foreach ($params as $name => $value) {
-                $query->add($name, $value);
-            }
-        }
+        $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl, $params);
         $stream = \GuzzleHttp\Psr7\stream_for(json_encode($contact));
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request->withBody($stream));
         } catch (ClientException $e) {
             throw parent::convertException($e);
         }

@@ -7,8 +7,7 @@ use Ctct\Components\Activities\Activity;
 use Ctct\Components\Activities\AddContacts;
 use Ctct\Components\Activities\ExportContacts;
 use GuzzleHttp\Exception\BadResponseException;
-use GuzzleHttp\Post\PostBody;
-use GuzzleHttp\Post\PostFile;
+use GuzzleHttp\Psr7\MultipartStream;
 use GuzzleHttp\Psr7\Stream;
 
 /**
@@ -107,15 +106,17 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.add_contacts_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $request->setHeader("Content-Type", "multipart/form-data");
 
-        $body = new PostBody();
-        $body->setField("lists", $lists);
-        $body->setField("file_name", $fileName);
-        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
+        $stream = new MultipartStream(
+            [
+                ['name' => 'file_name', 'contents' => $fileName],
+                ['name' => 'lists', 'contents' => $lists],
+                ['name' => 'data', 'contents' => fopen($fileLocation, 'r')],
+            ]
+        );
 
         try {
-            $response = parent::getClient()->send($request->withBody($body));
+            $response = parent::getClient()->send($request->withHeader("Content-Type", "multipart/form-data")->withBody($stream));
         } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
@@ -206,7 +207,7 @@ class ActivityService extends BaseService
      * @param string $accessToken - Constant Contact OAuth2 access token
      * @param string $fileName - The name of the file (ie: contacts.csv)
      * @param string $fileLocation - The location of the file on the server, this method uses fopen()
-     * @param string $lists - Comma separated list of ContactList id's to add the contacts to
+     * @param string $lists - Comma separated list of ContactList id's to remove the contacts from
      * @return Activity
      * @throws CtctException
      */
@@ -214,15 +215,17 @@ class ActivityService extends BaseService
     {
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.remove_from_lists_activity');
         $request = parent::createBaseRequest($accessToken, "POST", $baseUrl);
-        $request->setHeader("Content-Type", "multipart/form-data");
-
-        $body = new PostBody();
-        $body->setField("lists", $lists);
-        $body->setField("file_name", $fileName);
-        $body->addFile(new PostFile("data", fopen($fileLocation, 'r'), $fileName));
+        
+        $stream = new MultipartStream(
+            [
+                ['name' => 'file_name', 'contents' => $fileName],
+                ['name' => 'lists', 'contents' => $lists],
+                ['name' => 'data', 'contents' => fopen($fileLocation, 'r')],
+            ]
+        );
 
         try {
-            $response = parent::getClient()->send($request->withBody($stream));
+            $response = parent::getClient()->send($request->withHeader("Content-Type", "multipart/form-data")->withBody($stream));
         } catch (BadResponseException $e) {
             throw parent::convertException($e);
         }
