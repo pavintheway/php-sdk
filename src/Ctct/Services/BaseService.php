@@ -62,9 +62,14 @@ abstract class BaseService
     }
 
     protected function createBaseRequest($accessToken, $method, $baseUrl) {
-        $request = $this->client->createRequest($method, $baseUrl);
-        $request->getQuery()->set("api_key", $this->apiKey);
-        $request->setHeaders($this->getHeaders($accessToken));
+        $request = $this->client->request(
+            $method,
+            $baseUrl,
+            [
+                'query' => ['api_key' => $this->apiKey],
+                'headers' => $this->getHeaders($accessToken),
+            ]
+        );
         return $request;
     }
 
@@ -76,7 +81,7 @@ abstract class BaseService
     protected function convertException($exception)
     {
         $ctctException = new CtctException($exception->getResponse()->getReasonPhrase(), $exception->getCode());
-        $ctctException->setUrl($exception->getResponse()->getEffectiveUrl());
+        $ctctException->setUrl('');
         $ctctException->setErrors(json_decode($exception->getResponse()->getBody()->getContents()));
         return $ctctException;
     }
