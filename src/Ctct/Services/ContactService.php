@@ -6,7 +6,6 @@ use Ctct\Util\Config;
 use Ctct\Components\Contacts\Contact;
 use Ctct\Components\ResultSet;
 use GuzzleHttp\Exception\ClientException;
-use GuzzleHttp\Stream\Stream;
 
 /**
  * Performs all actions pertaining to Constant Contact Contacts
@@ -34,20 +33,22 @@ class ContactService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.contacts');
 
         $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
+
+        $query = parent::createBaseQuery();
+
         if ($params) {
-            $query = $request->getQuery();
             foreach ($params as $name => $value) {
-                $query->add($name, $value);
+                $query[$name] = $value;
             }
         }
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request, ['query' => $query]);
         } catch (ClientException $e) {
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode($response->getBody(), true);
         $contacts = array();
         foreach ($body['results'] as $contact) {
             $contacts[] = Contact::create($contact);
@@ -74,20 +75,22 @@ class ContactService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.list_contacts'), $listId);
 
         $request = parent::createBaseRequest($accessToken, 'GET', $baseUrl);
+
+        $query = parent::createBaseQuery();
+
         if ($params) {
-            $query = $request->getQuery();
             foreach ($params as $name => $value) {
-                $query->add($name, $value);
+                $query[$name] = $value;
             }
         }
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request, ['query' => $query]);
         } catch (ClientException $e) {
             throw parent::convertException($e);
         }
 
-        $body = $response->json();
+        $body = json_decode($response->getBody(), true);
         $contacts = array();
         foreach ($body['results'] as $contact) {
             $contacts[] = Contact::create($contact);
@@ -114,7 +117,7 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        return Contact::create($response->json());
+        return Contact::create(json_decode($response->getBody(), true));
     }
 
     /**
@@ -133,22 +136,22 @@ class ContactService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . Config::get('endpoints.contacts');
 
         $request = parent::createBaseRequest($accessToken, 'POST', $baseUrl);
+
+        $query = parent::createBaseQuery();
+
         if ($params) {
-            $query = $request->getQuery();
             foreach ($params as $name => $value) {
-                $query->add($name, $value);
+                $query[$name] = $value;
             }
         }
-        $stream = Stream::factory(json_encode($contact));
-        $request->setBody($stream);
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request, ['query' => $query, 'body' => json_encode($contact)]);
         } catch (ClientException $e) {
             throw parent::convertException($e);
         }
 
-        return Contact::create($response->json());
+        return Contact::create(json_decode($response->getBody(), true));
     }
 
     /**
@@ -169,7 +172,7 @@ class ContactService extends BaseService
             throw parent::convertException($e);
         }
 
-        return ($response->getStatusCode() == 204) ? true : false;
+        return $response->getStatusCode() == 204;
     }
 
     /**
@@ -188,21 +191,21 @@ class ContactService extends BaseService
         $baseUrl = Config::get('endpoints.base_url') . sprintf(Config::get('endpoints.contact'), $contact->id);
 
         $request = parent::createBaseRequest($accessToken, 'PUT', $baseUrl);
+
+        $query = parent::createBaseQuery();
+
         if ($params) {
-            $query = $request->getQuery();
             foreach ($params as $name => $value) {
-                $query->add($name, $value);
+                $query[$name] = $value;
             }
         }
-        $stream = Stream::factory(json_encode($contact));
-        $request->setBody($stream);
 
         try {
-            $response = parent::getClient()->send($request);
+            $response = parent::getClient()->send($request, ['query' => $query, 'body' => json_encode($contact)]);
         } catch (ClientException $e) {
             throw parent::convertException($e);
         }
 
-        return Contact::create($response->json());
+        return Contact::create(json_decode($response->getBody(), true));
     }
 }
